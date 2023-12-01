@@ -2,7 +2,7 @@
 
 from flask import Flask, jsonify, request
 from flask_migrate import Migrate
-from models import db, Article
+from models import db, Article,  Comment, Like, Rating, Subscriber
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
@@ -41,6 +41,54 @@ def manage_article(article_id):
         db.session.delete(article)
         db.session.commit()
         return jsonify({"message": "Article deleted successfully"})
+
+@app.route('/api/articles/<int:article_id>/comments', methods=['GET', 'POST'])
+def manage_comments(article_id):
+    if request.method == 'GET':
+        comments = Comment.query.filter_by(article_id=article_id).all()
+        return jsonify([{"id": comment.id, "content": comment.content} for comment in comments])
+    elif request.method == 'POST':
+        data = request.json
+        new_comment = Comment(article_id=article_id, content=data['content'])
+        db.session.add(new_comment)
+        db.session.commit()
+        return jsonify({"message": "Comment added successfully", "comment": {"id": new_comment.id, "content": new_comment.content}})
+
+@app.route('/api/articles/<int:article_id>/likes', methods=['GET', 'POST'])
+def manage_likes(article_id):
+    if request.method == 'GET':
+        likes = Like.query.filter_by(article_id=article_id).all()
+        return jsonify({"likes": len(likes)})
+    elif request.method == 'POST':
+        new_like = Like(article_id=article_id)
+        db.session.add(new_like)
+        db.session.commit()
+        return jsonify({"message": "Like added successfully"})
+
+@app.route('/api/articles/<int:article_id>/ratings', methods=['GET', 'POST'])
+def manage_ratings(article_id):
+    if request.method == 'GET':
+        ratings = Rating.query.filter_by(article_id=article_id).all()
+        avg_rating = sum([rating.rating for rating in ratings]) / len(ratings) if ratings else 0
+        return jsonify({"average_rating": avg_rating})
+    elif request.method == 'POST':
+        data = request.json
+        new_rating = Rating(article_id=article_id, rating=data['rating'])
+        db.session.add(new_rating)
+        db.session.commit()
+        return jsonify({"message": "Rating added successfully"})
+
+@app.route('/api/subscribers', methods=['GET', 'POST'])
+def manage_subscribers():
+    if request.method == 'GET':
+        subscribers = Subscriber.query.all()
+        return jsonify([{"id": subscriber.id, "email": subscriber.email} for subscriber in subscribers])
+    elif request.method == 'POST':
+        data = request.json
+        new_subscriber = Subscriber(email=data['email'])
+        db.session.add(new_subscriber)
+        db.session.commit()
+        return jsonify({"message": "Subscription successful", "subscriber": {"id": new_subscriber.id, "email": new_subscriber.email}})
 
 if __name__ == '__main__':
     app.run(debug=True)
