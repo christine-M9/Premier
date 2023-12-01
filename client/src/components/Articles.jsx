@@ -10,7 +10,7 @@ const Articles = () => {
   const [articles, setArticles] = useState([]);
 
   useEffect(() => {
-    axios.get('/api/articles')
+    axios.get('/articles')
       .then(response => setArticles(response.data))
       .catch(error => console.error('Error fetching articles:', error.response));
   }, []);

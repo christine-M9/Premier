@@ -19,13 +19,13 @@ migrate = Migrate(app, db)
 
 with app.app_context():
     db.create_all()
-    
+
 CORS(app)  # Enable CORS for all routes
 @app.route('/')
 def index():
     return render_template('index.html') 
 
-@app.route('/api/articles', methods=['GET', 'POST'])
+@app.route('/articles', methods=['GET', 'POST'])
 def manage_articles():
     if request.method == 'GET':
         articles = Article.query.all()
@@ -37,7 +37,7 @@ def manage_articles():
         db.session.commit()
         return jsonify({"message": "Article created successfully", "article": {"id": new_article.id, "title": new_article.title, "content": new_article.content}})
     
-@app.route('/api/articles/<int:article_id>', methods=['GET', 'PUT', 'DELETE'])
+@app.route('/articles/<int:article_id>', methods=['GET', 'PUT', 'DELETE'])
 def manage_article(article_id):
     article = Article.query.get_or_404(article_id)
 
@@ -54,7 +54,7 @@ def manage_article(article_id):
         db.session.commit()
         return jsonify({"message": "Article deleted successfully"})
 
-@app.route('/api/articles/<int:article_id>/comments', methods=['GET', 'POST'])
+@app.route('/articles/<int:article_id>/comments', methods=['GET', 'POST'])
 def manage_comments(article_id):
     if request.method == 'GET':
         comments = Comment.query.filter_by(article_id=article_id).all()
@@ -66,7 +66,7 @@ def manage_comments(article_id):
         db.session.commit()
         return jsonify({"message": "Comment added successfully", "comment": {"id": new_comment.id, "content": new_comment.content}})
 
-@app.route('/api/articles/<int:article_id>/likes', methods=['GET', 'POST'])
+@app.route('/articles/<int:article_id>/likes', methods=['GET', 'POST'])
 def manage_likes(article_id):
     if request.method == 'GET':
         likes = Like.query.filter_by(article_id=article_id).all()
@@ -77,20 +77,26 @@ def manage_likes(article_id):
         db.session.commit()
         return jsonify({"message": "Like added successfully"})
 
-@app.route('/api/articles/<int:article_id>/ratings', methods=['GET', 'POST'])
+@app.route('/articles/<int:article_id>/ratings', methods=['GET', 'POST'])
 def manage_ratings(article_id):
     if request.method == 'GET':
         ratings = Rating.query.filter_by(article_id=article_id).all()
         avg_rating = sum([rating.rating for rating in ratings]) / len(ratings) if ratings else 0
-        return jsonify({"average_rating": avg_rating})
+        return jsonify({"average_rating": avg_rating, "ratings": [rating.rating for rating in ratings]})
     elif request.method == 'POST':
         data = request.json
         new_rating = Rating(article_id=article_id, rating=data['rating'])
         db.session.add(new_rating)
         db.session.commit()
-        return jsonify({"message": "Rating added successfully"})
 
-@app.route('/api/subscribers', methods=['GET', 'POST'])
+        # Return the updated list of ratings and the average rating for the article
+        ratings = Rating.query.filter_by(article_id=article_id).all()
+        ratings_list = [rating.rating for rating in ratings]
+        avg_rating = sum(ratings_list) / len(ratings_list) if ratings_list else 0
+        
+        return jsonify({"ratings": ratings_list, "average_rating": avg_rating, "message": "Rating added successfully"})
+
+@app.route('/subscribers', methods=['GET', 'POST'])
 def manage_subscribers():
     if request.method == 'GET':
         subscribers = Subscriber.query.all()

@@ -1,17 +1,39 @@
 // components/Comments.jsx
-// Similar structure for Likes and Ratings components
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const Comments = ({ articleId }) => {
   const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
 
   useEffect(() => {
-    axios.get(`/api/articles/${articleId}/comments`)
+    fetchComments();
+  }, [articleId]);
+
+  const fetchComments = () => {
+    axios.get(`/articles/${articleId}/comments`)
       .then(response => setComments(response.data))
       .catch(error => console.error('Error fetching comments:', error.response));
-  }, [articleId]);
+  };
+
+  const handleCommentSubmit = () => {
+    if (newComment.trim() === '') {
+      // Do not submit empty comments
+      return;
+    }
+
+    axios.post(`/articles/${articleId}/comments`, { content: newComment })
+      .then(response => {
+        // Check if the response data has the expected structure
+        if (response.data && response.data.comment) {
+          setComments([...comments, response.data.comment]);
+          setNewComment(''); // Clear the input field after submission
+        } else {
+          console.error('Invalid data format for comments:', response.data);
+        }
+      })
+      .catch(error => console.error('Error adding comment:', error));
+  };
 
   return (
     <div>
@@ -21,6 +43,15 @@ const Comments = ({ articleId }) => {
           <li key={comment.id}>{comment.content}</li>
         ))}
       </ul>
+      <div>
+        <input
+          type="text"
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          placeholder="Add a comment"
+        />
+        <button onClick={handleCommentSubmit}>Submit</button>
+      </div>
     </div>
   );
 };
