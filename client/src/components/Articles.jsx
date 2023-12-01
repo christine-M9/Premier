@@ -1,11 +1,16 @@
+// components/Articles.jsx
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Comments from './Comments';
+import Likes from './Likes';
+import Ratings from './Ratings';
 
 const Articles = () => {
   const [articles, setArticles] = useState([]);
 
   useEffect(() => {
-    axios.get('api/articles')
+    axios.get('/api/articles')
       .then(response => setArticles(response.data))
       .catch(error => console.error('Error fetching articles:', error.response));
   }, []);
@@ -21,7 +26,12 @@ const Articles = () => {
       <ul>
         {articles.map(article => (
           <li key={article.id}>
-            {article.title} - {article.content}
+            <h3>{article.title}</h3>
+            <p>{article.content}</p>
+
+            <Comments articleId={article.id} />
+            <Likes articleId={article.id} />
+            <Ratings articleId={article.id} />
           </li>
         ))}
       </ul>
