@@ -1,10 +1,17 @@
 # app.py
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
+
 from flask_migrate import Migrate
 from models import db, Article,  Comment, Like, Rating, Subscriber
+from flask_cors import CORS
 
-app = Flask(__name__)
+# app = Flask(__name__)
+
+
+
+app = Flask(__name__, static_folder='../client/dist', template_folder='../client/dist', static_url_path='')
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
@@ -12,6 +19,11 @@ migrate = Migrate(app, db)
 
 with app.app_context():
     db.create_all()
+    
+CORS(app)  # Enable CORS for all routes
+@app.route('/')
+def index():
+    return render_template('index.html') 
 
 @app.route('/api/articles', methods=['GET', 'POST'])
 def manage_articles():
